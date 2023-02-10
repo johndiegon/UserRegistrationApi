@@ -97,7 +97,7 @@ namespace UserRegistrationApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-        //[ApiKey]
+        [ApiKey]
         [HttpDelete("{document}")]
         public async Task<ActionResult<UserResponse>> Delete([FromRoute] string document)
         {

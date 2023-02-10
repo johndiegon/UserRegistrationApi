@@ -5,16 +5,23 @@ using UserRegistrationApi.Application.Data.Repositories;
 using UserRegistrationApi.Application.Enuns;
 using UserRegistrationApi.Application.Helper;
 using UserRegistrationApi.Application.Interfaces;
+using UserRegistrationApi.Application.Interfaces.Repositories;
 
 namespace UserRegistrationApi.Application.Service
 {
     public class UserService : IUserService
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IAddressRepository _addressRepository;
+        private readonly IContactRepository _contactRepository;
+        private readonly IUserRepository _userRepository;
 
-        public UserService(ApplicationDbContext db)
+        public UserService(IAddressRepository addressRepository,
+                           IContactRepository contactRepository,
+                           IUserRepository userRepository)
         {
-            _db = db;
+            _addressRepository = addressRepository;
+            _contactRepository = contactRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<UserResponse> CreateUser(UserRequest user)
@@ -23,8 +30,6 @@ namespace UserRegistrationApi.Application.Service
             {
                 if (user.IsValid())
                 {
-                    var userId = 0;
-
                     var entity = new UserEntity
                     {
                         DateBirth = user.DateBirth,
@@ -34,12 +39,7 @@ namespace UserRegistrationApi.Application.Service
                         Name = user.Name
                     };
 
-                    using (_db)
-                    {
-                        _db.User.Add(entity);
-                        _db.SaveChanges();
-                        userId = entity.Id;
-                    }
+                    var userEntity = _userRepository.CreateUser(entity);
 
                     var contacts = new List<ContactEntity>();
 
@@ -47,21 +47,17 @@ namespace UserRegistrationApi.Application.Service
                     {
                         Contact = user.Email,
                         ContactType = ContactType.Email.ToString(),
-                        Id = userId
+                        Id = userEntity.Id
                     });
 
                     contacts.Add(new ContactEntity
                     {
                         Contact = user.Phone.ToBrazilFormatPhone(),
                         ContactType = ContactType.Phone.ToString(),
-                        Id = userId
+                        Id = userEntity.Id
                     });
 
-                    using (_db)
-                    {
-                        _db.Contact.AddRange(contacts);
-                        _db.SaveChanges();
-                    }
+                    //_contactRepository.CreateContact()
 
                     return UserResponseOk("User Created with Success");
                 }
